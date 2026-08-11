@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sequence Number Finder (1-50)</title>
+    <title>Sequence Number Finder</title>
     <style>
         * {
             box-sizing: border-box;
@@ -26,6 +26,29 @@
             margin-bottom: 10px;
             color: #333;
         }
+        
+        /* MODE SELECTOR BUTTONS */
+        .mode-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .mode-btn {
+            padding: 6px 16px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border: 2px solid #3498db;
+            background-color: white;
+            color: #3498db;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mode-btn.active {
+            background-color: #3498db;
+            color: white;
+        }
+
         #stats {
             margin-bottom: 15px;
             font-size: 1rem;
@@ -38,11 +61,9 @@
             gap: 15px;
         }
         
-        /* THE FIXED GRID CONTAINER */
+        /* DEFAULT DESKTOP GRID */
         #grid {
             display: grid;
-            /* Default Desktop: 10 columns */
-            grid-template-columns: repeat(10, 55px);
             grid-gap: 8px;
             background-color: #fff;
             padding: 12px;
@@ -50,8 +71,10 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.08);
             max-width: 100%;
         }
+        /* Dynamic columns controlled by JS */
+        .grid-50 { grid-template-columns: repeat(10, 55px); }
+        .grid-25 { grid-template-columns: repeat(5, 55px); }
         
-        /* THE FIXED CELL MIX */
         .cell {
             width: 55px;
             height: 55px;
@@ -101,20 +124,19 @@
             box-shadow: 0 3px 6px rgba(52, 152, 219, 0.3);
         }
 
-        /* AUTO-SCALE FOR MOBILE SCREENS */
+        /* MOBILE RESPONSIVE ADAPTATION */
         @media (max-width: 650px) {
             #grid {
-                /* Switch to 5 columns on phones so it's taller instead of wider */
-                grid-template-columns: repeat(5, 1fr);
+                grid-template-columns: repeat(5, 1fr) !important; /* Force 5 columns on mobile */
                 grid-gap: 6px;
                 padding: 10px;
-                width: 90vw; /* Takes up exactly 90% of your screen width */
+                width: 90vw;
             }
             .cell {
                 width: auto;
                 height: auto;
-                aspect-ratio: 1 / 1; /* Keeps them perfectly square */
-                font-size: 1.3rem; /* Dynamic legible text size */
+                aspect-ratio: 1 / 1;
+                font-size: 1.3rem;
             }
         }
     </style>
@@ -122,16 +144,24 @@
 <body>
 
     <h1>Find the Numbers in Sequence!</h1>
+    
+    <!-- Mode Selection -->
+    <div class="mode-container">
+        <button id="btn-25" class="mode-btn" onclick="changeMode(25)">25 Numbers</button>
+        <button id="btn-50" class="mode-btn active" onclick="changeMode(50)">50 Numbers</button>
+    </div>
+
     <div id="stats">
         <div>Next: <span id="next-num" style="color: #3498db;">1</span></div>
         <div>Time: <span id="timer" style="color: #e74c3c;">0.0</span>s</div>
     </div>
     
-    <div id="grid"></div>
+    <div id="grid" class="grid-50"></div>
     
     <button id="restart-btn" onclick="initGame()">Restart Game</button>
 
     <script>
+        let totalNumbers = 50; // Default mode
         let currentTarget = 1;
         let startTime = null;
         let timerInterval = null;
@@ -151,6 +181,24 @@
             document.getElementById('timer').textContent = elapsed;
         }
 
+        function changeMode(mode) {
+            totalNumbers = mode;
+            
+            // Toggle active classes on buttons
+            document.getElementById('btn-25').classList.toggle('active', mode === 25);
+            document.getElementById('btn-50').classList.toggle('active', mode === 50);
+            
+            // Adjust grid layout style class for desktop views
+            const gridContainer = document.getElementById('grid');
+            if (mode === 25) {
+                gridContainer.className = 'grid-25';
+            } else {
+                gridContainer.className = 'grid-50';
+            }
+            
+            initGame();
+        }
+
         function handleCellClick(e) {
             if (!gameActive) return;
             
@@ -166,12 +214,12 @@
                 e.target.classList.add('correct');
                 currentTarget++;
 
-                if (currentTarget > 50) {
+                if (currentTarget > totalNumbers) {
                     clearInterval(timerInterval);
                     gameActive = false;
                     const finalTime = document.getElementById('timer').textContent;
                     setTimeout(() => {
-                        alert(`🎉 Awesome job! You found all 50 numbers in ${finalTime} seconds.`);
+                        alert(`🎉 Awesome job! You found all ${totalNumbers} numbers in ${finalTime} seconds.`);
                     }, 100);
                     document.getElementById('next-num').textContent = "Done!";
                 } else {
@@ -191,7 +239,8 @@
             document.getElementById('timer').textContent = "0.0";
             document.getElementById('next-num').textContent = currentTarget;
 
-            const numbers = Array.from({length: 50}, (_, i) => i + 1);
+            // Generate numbers dynamically based on active mode
+            const numbers = Array.from({length: totalNumbers}, (_, i) => i + 1);
             shuffle(numbers);
 
             const gridContainer = document.getElementById('grid');
@@ -207,6 +256,7 @@
             });
         }
 
+        // Initialize game on startup
         initGame();
     </script>
 </body>
